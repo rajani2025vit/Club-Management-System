@@ -17,8 +17,8 @@ const nav = [
 ];
 
 
-const API = "http://localhost:5000";
-const apiFetch = (url, options = {}) => fetch(url, { ...options, credentials: "include" });
+const API = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+const apiFetch = (url, options = {}) => fetch(url.startsWith("/api/") ? `${API}${url}` : url, { ...options, credentials: "include" });
 
 function AuthScreen({ onLogin }) {
   const [signup, setSignup] = useState(false);
@@ -102,7 +102,7 @@ function App() {
   });
 
   const loadStudents = async () => {
-    const response = await apiFetch("http://localhost:5000/api/students");
+    const response = await apiFetch(`${API}/api/students`);
     if (!response.ok) throw new Error("Unable to load students");
     const data = await response.json();
     setStudents(data.map(formatStudent));
@@ -127,7 +127,7 @@ function App() {
   const blankRecruitment = { recruitmentId: "", recruitmentTitle: "", clubId: "", team: "Technical", eligibility: "All Students", startDate: "", endDate: "" };
   const [recruitmentForm, setRecruitmentForm] = useState(blankRecruitment);
   const loadRecruitments = async () => {
-    const response = await apiFetch("http://localhost:5000/api/recruitments");
+    const response = await apiFetch(`${API}/api/recruitments`);
     if (!response.ok) throw new Error("Unable to load recruitments");
     const data = await response.json();
     setDrives(data.map((r, i) => ({
@@ -155,8 +155,8 @@ function App() {
     setRecruitmentSaving(true);
     try {
       const url = editingRecruitment
-        ? `http://localhost:5000/api/recruitments/${encodeURIComponent(editingRecruitment.recruitmentId)}`
-        : "http://localhost:5000/api/recruitments";
+        ? `${API}/api/recruitments/${encodeURIComponent(editingRecruitment.recruitmentId)}`
+        : `${API}/api/recruitments`;
       const response = await apiFetch(url, {
         method: editingRecruitment ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,7 +165,7 @@ function App() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save recruitment");
       await loadRecruitments();
-      const graphResponse = await apiFetch("http://localhost:5000/api/graph");
+      const graphResponse = await apiFetch(`${API}/api/graph`);
       if (graphResponse.ok) setGraphData(await graphResponse.json());
       setShowRecruitmentForm(false);
       setEditingRecruitment(null);
@@ -176,11 +176,11 @@ function App() {
   const deleteRecruitment = async (drive) => {
     if (!window.confirm(`Delete ${drive.role}? Recruitments with applications cannot be deleted.`)) return;
     try {
-      const response = await apiFetch(`http://localhost:5000/api/recruitments/${encodeURIComponent(drive.recruitmentId)}`, { method: "DELETE" });
+      const response = await apiFetch(`${API}/api/recruitments/${encodeURIComponent(drive.recruitmentId)}`, { method: "DELETE" });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not delete recruitment");
       await loadRecruitments();
-      const graphResponse = await apiFetch("http://localhost:5000/api/graph");
+      const graphResponse = await apiFetch(`${API}/api/graph`);
       if (graphResponse.ok) setGraphData(await graphResponse.json());
       notify("Recruitment deleted!");
     } catch (error) { window.alert(error.message); }
@@ -191,7 +191,7 @@ function App() {
 
   useEffect(() => {
     const fetchJson = async (url) => {
-      const response = await apiFetch(`http://localhost:5000${url}`);
+      const response = await apiFetch(`${API}${url}`);
       if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
       return response.json();
     };
@@ -227,7 +227,7 @@ function App() {
   const blankEvent = { eventId: "", eventName: "", clubId: "", eventDate: "", eventType: "Workshop", venue: "", mode: "Offline", budget: "0" };
   const [eventForm, setEventForm] = useState(blankEvent);
   const loadEvents = async () => {
-    const response = await apiFetch("http://localhost:5000/api/events");
+    const response = await apiFetch(`${API}/api/events`);
     if (!response.ok) throw new Error("Unable to load events");
     const data = await response.json();
     const icons = ["⚡", "🤖", "✍️"];
@@ -263,12 +263,12 @@ function App() {
   const saveEvent = async (e) => {
     e.preventDefault(); setEventSaving(true);
     try {
-      const url = editingEvent ? `http://localhost:5000/api/events/${encodeURIComponent(editingEvent.eventId)}` : "http://localhost:5000/api/events";
+      const url = editingEvent ? `/api/events/${encodeURIComponent(editingEvent.eventId)}` : `${API}/api/events`;
       const response = await apiFetch(url, { method: editingEvent ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...eventForm, budget: Number(eventForm.budget) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save event");
       await loadEvents();
-      const graphResponse = await apiFetch("http://localhost:5000/api/graph");
+      const graphResponse = await apiFetch(`${API}/api/graph`);
       if (graphResponse.ok) setGraphData(await graphResponse.json());
       setShowEventForm(false); setEditingEvent(null);
       notify(editingEvent ? "Event updated!" : "Event created!");
@@ -278,11 +278,11 @@ function App() {
   const deleteEvent = async (event) => {
     if (!window.confirm(`Delete ${event.title}? Events with registrations cannot be deleted.`)) return;
     try {
-      const response = await apiFetch(`http://localhost:5000/api/events/${encodeURIComponent(event.eventId)}`, { method: "DELETE" });
+      const response = await apiFetch(`${API}/api/events/${encodeURIComponent(event.eventId)}`, { method: "DELETE" });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not delete event");
       await loadEvents();
-      const graphResponse = await apiFetch("http://localhost:5000/api/graph");
+      const graphResponse = await apiFetch(`${API}/api/graph`);
       if (graphResponse.ok) setGraphData(await graphResponse.json());
       notify("Event deleted!");
     } catch (error) { window.alert(error.message); }
@@ -299,7 +299,7 @@ const resetClubForm = () => {
   setClubForm({ clubId: "", name: "", category: "Technical", establishedYear: "2026" });
 };
 const loadClubs = async () => {
-  const response = await apiFetch("http://localhost:5000/api/clubs");
+  const response = await apiFetch(`${API}/api/clubs`);
   if (!response.ok) throw new Error("Unable to load clubs");
   const data = await response.json();
   const emojis = { C001: "💻", C002: "🤖", C003: "📚" };
@@ -323,8 +323,8 @@ const saveClub = async (e) => {
   try {
     const editing = Boolean(editingClub);
     const url = editing
-      ? `http://localhost:5000/api/clubs/${encodeURIComponent(editingClub.clubId)}`
-      : "http://localhost:5000/api/clubs";
+      ? `${API}/api/clubs/${encodeURIComponent(editingClub.clubId)}`
+      : `${API}/api/clubs`;
     const response = await apiFetch(url, {
       method: editing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -342,7 +342,7 @@ const saveClub = async (e) => {
 const deleteClub = async (club) => {
   if (!window.confirm(`Delete ${club.name}? Clubs with relationships cannot be deleted.`)) return;
   try {
-    const response = await apiFetch(`http://localhost:5000/api/clubs/${encodeURIComponent(club.clubId)}`, { method: "DELETE" });
+    const response = await apiFetch(`${API}/api/clubs/${encodeURIComponent(club.clubId)}`, { method: "DELETE" });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not delete club");
     await refreshRelationships();
@@ -428,9 +428,9 @@ const searchResults = query.trim()
 const refreshRelationships = async () => {
   await loadStudents();
   const [clubsResponse, eventsResponse, graphResponse] = await Promise.all([
-    apiFetch("http://localhost:5000/api/clubs"),
-    apiFetch("http://localhost:5000/api/events"),
-    apiFetch("http://localhost:5000/api/graph")
+    apiFetch(`${API}/api/clubs`),
+    apiFetch(`${API}/api/events`),
+    apiFetch(`${API}/api/graph`)
   ]);
   if (!clubsResponse.ok || !eventsResponse.ok || !graphResponse.ok) {
     throw new Error("Could not refresh relationship data");
@@ -469,7 +469,7 @@ const saveRelationship = async (endpoint, payload) => {
   }
   setRelationshipSaving(true);
   try {
-    const response = await apiFetch(`http://localhost:5000${endpoint}`, {
+    const response = await apiFetch(`${API}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ registrationNo: actionStudent, ...payload })
@@ -492,7 +492,7 @@ const saveRelationship = async (endpoint, payload) => {
     if (!drive.recruitmentId) return window.alert("Recruitment ID is missing in Neo4j.");
     setApplicationSaving(true);
     try {
-      const response = await apiFetch("http://localhost:5000/api/recruitment-applications", {
+      const response = await apiFetch(`${API}/api/recruitment-applications`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ registrationNo: actionStudent, recruitmentId: drive.recruitmentId })
@@ -500,8 +500,8 @@ const saveRelationship = async (endpoint, payload) => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Application failed");
       const [recruitmentsResponse, graphResponse] = await Promise.all([
-        apiFetch("http://localhost:5000/api/recruitments"),
-        apiFetch("http://localhost:5000/api/graph")
+        apiFetch(`${API}/api/recruitments`),
+        apiFetch(`${API}/api/graph`)
       ]);
       if (!recruitmentsResponse.ok || !graphResponse.ok) throw new Error("Application saved, but refresh failed");
       const [recruitments, graph] = await Promise.all([recruitmentsResponse.json(), graphResponse.json()]);
@@ -537,8 +537,8 @@ const saveRelationship = async (endpoint, payload) => {
     try {
       const editing = Boolean(editingStudent);
       const url = editing
-        ? `http://localhost:5000/api/students/${encodeURIComponent(editingStudent.id)}`
-        : "http://localhost:5000/api/students";
+        ? `${API}/api/students/${encodeURIComponent(editingStudent.id)}`
+        : `${API}/api/students`;
       const response = await apiFetch(url, {
         method: editing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -571,7 +571,7 @@ const saveRelationship = async (endpoint, payload) => {
     if (!window.confirm(`Delete ${student.name} (${student.id})? This also removes their Neo4j relationships.`)) return;
     try {
       const response = await apiFetch(
-        `http://localhost:5000/api/students/${encodeURIComponent(student.id)}`,
+        `${API}/api/students/${encodeURIComponent(student.id)}`,
         { method: "DELETE" }
       );
       const result = await response.json();
