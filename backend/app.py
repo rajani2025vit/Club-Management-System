@@ -20,8 +20,14 @@ CORS(
     ],
     supports_credentials=True
 )
-app.config.update(SECRET_KEY=os.getenv('FLASK_SECRET_KEY', ''), SESSION_COOKIE_HTTPONLY=True,
-                  SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=False)
+
+app.config.update(
+    SECRET_KEY=os.getenv('FLASK_SECRET_KEY', ''),
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='None',
+    SESSION_COOKIE_SECURE=True
+)
+
 if not app.config['SECRET_KEY']:
     raise RuntimeError('Set FLASK_SECRET_KEY in backend/.env before starting Flask')
 CORS(
