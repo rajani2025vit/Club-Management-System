@@ -65,6 +65,13 @@ function App() {
   }, []);
   const isAdmin = auth?.role === "admin";
   const isManager = auth?.role === "admin" || auth?.role === "club_lead";
+  const userInitials = (auth?.name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join("") || "U";
   const logout = async () => { await apiFetch(`${API}/api/auth/logout`, {method:"POST"}); setAuth(null); };
   const [managedClubIds, setManagedClubIds] = useState([]);
   const [managedClubsLoading, setManagedClubsLoading] = useState(true);
@@ -640,7 +647,7 @@ const saveRelationship = async (endpoint, payload) => {
             <p>Everything happening on campus, all in one place.</p>
           </div>
           <div className="profile-row">
-            <div className="profile-avatar">CH</div>
+            <div className="profile-avatar">{userInitials}</div>
             <div><strong>{auth.name}</strong><small>{auth.role} · {auth.registrationNo}</small></div>
             <button className="secondary-btn" onClick={logout}>Logout</button>
             <span className="online-dot" />
@@ -717,7 +724,10 @@ const saveRelationship = async (endpoint, payload) => {
   )}
 </div>
             <button className="icon-btn notification-btn" onClick={() => notify("You're all caught up!")}><Bell size={19} /><i /></button>
-            <div className="top-avatar">CH</div>
+            <div className="top-user">
+  <span className="top-user-name">{auth?.name || "User"}</span>
+  <div className="top-avatar">{userInitials}</div>
+</div>
           </div>
         </header>
 
