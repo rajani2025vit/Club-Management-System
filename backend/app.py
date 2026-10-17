@@ -7,9 +7,19 @@ from dotenv import load_dotenv
 from neo4j import GraphDatabase
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 app = Flask(__name__)
+CORS(
+    app,
+    origins=[
+        "http://localhost:5174",
+        "https://club-management-system-rho.vercel.app",
+        "https://club-management-system-o99yushii-rajani2025vit.vercel.app"
+    ],
+    supports_credentials=True
+)
 app.config.update(SECRET_KEY=os.getenv('FLASK_SECRET_KEY', ''), SESSION_COOKIE_HTTPONLY=True,
                   SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=False)
 if not app.config['SECRET_KEY']:
